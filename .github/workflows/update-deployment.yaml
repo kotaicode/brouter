@@ -1,0 +1,35 @@
+name: Update Deployment with Commit Hash
+
+on:
+  workflow_run:
+    workflows: ['Build and Push to GitHub Container Registry']
+    types: [completed]
+
+jobs:
+  update-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          repository: kotaicode/k8s-manifest-brouter
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Git Config
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Deployment YAML with Commit Hash
+        run: |
+          echo "Updating deployment with commit hash: ${{ github.sha }}"
+          sed -i "s|\(image:.*:\).*|\1${{ github.sha }}|" k8s-brouter-server/deployment-brouter-server.yaml
+          git add k8s-brouter-server/deployment-brouter-server.yaml
+          git commit -m "Update deployment with commit hash ${{ github.sha }}"
+
+      - name: Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git push origin main

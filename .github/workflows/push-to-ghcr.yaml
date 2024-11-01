@@ -17,8 +17,6 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref_name }}
     permissions:
       contents: write
       packages: write
